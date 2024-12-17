@@ -20,8 +20,8 @@ const saltRounds = 12;
 router.post('/new-user', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Validar los datos de entrada
-        const { name, surnames, password, email, license, keyAccess } = req.body;
-        if (!email || !password || !name || !surnames || !license) {
+        const { name, type = 'user', surnames, password, email, license, keyAccess, } = req.body;
+        if (!email || !password || !name || !type || !surnames || !license) {
             res.status(400).json({ message: 'Todos los campos son obligatorios' });
             return;
         }
@@ -30,7 +30,7 @@ router.post('/new-user', (req, res) => __awaiter(void 0, void 0, void 0, functio
             return;
         }
         const hashedPassword = yield bcrypt_1.default.hash(password, saltRounds);
-        const usuario = { name, surnames, email, license, password: hashedPassword };
+        const usuario = { name, type, surnames, email, license, password: hashedPassword };
         // Iniciar la transacción
         db_1.default.beginTransaction((err) => {
             if (err) {

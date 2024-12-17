@@ -9,9 +9,11 @@ const saltRounds = 12;
 router.post('/new-user', async (req: Request, res: Response) => {
     try {
         // Validar los datos de entrada
-        const { name, surnames, password, email, license, keyAccess } = req.body;
+        const { name, type='user', surnames, password, email, license, keyAccess,} = req.body;
 
-        if (!email || !password || !name || !surnames || !license) {
+        
+
+        if (!email ||  !password || !name || !type || !surnames || !license)  {
             res.status(400).json({ message: 'Todos los campos son obligatorios' });
             return;
         }
@@ -23,7 +25,7 @@ router.post('/new-user', async (req: Request, res: Response) => {
 
         
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-        const usuario = { name, surnames, email, license, password: hashedPassword };
+        const usuario = { name, type, surnames, email, license, password: hashedPassword };
 
         // Iniciar la transacción
         connection.beginTransaction((err) => {

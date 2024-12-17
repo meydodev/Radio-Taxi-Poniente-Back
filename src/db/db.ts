@@ -4,7 +4,7 @@ const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: '',
+    database: 'app_taxi_poniente',
 });
 
 export default connection;
