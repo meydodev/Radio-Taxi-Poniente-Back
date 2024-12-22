@@ -36,10 +36,8 @@ router.post('/verify', async (req: Request, res: Response)=> {
             //console.log('Coincidencia de contraseña:', match); // Debugging
 
             if (match) {
-                const token = jwt.sign({ id: usuario.id_user }, SECRET_KEY, { expiresIn: '30m' });
-                const usuarioId = jwt.sign({ usuarioId: usuario.id_user }, SECRET_KEY, { expiresIn: '30m' });
-                const permiso = jwt.sign({ permiso: usuario.permiso }, SECRET_KEY, { expiresIn: '30m' });
-                return res.json({ token,usuarioId,permiso });
+                const token = jwt.sign({ id: usuario.id_user, permiso: usuario.permiso }, SECRET_KEY, { expiresIn: '30m' });
+                return res.json({ token });
             } else {
                 return res.status(401).json({ message: 'Usuario o contraseña incorrecto' });
             }
