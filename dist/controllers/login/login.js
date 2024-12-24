@@ -35,10 +35,8 @@ router.post('/verify', (req, res) => __awaiter(void 0, void 0, void 0, function*
             const match = yield bcrypt_1.default.compare(password, usuario.password);
             //console.log('Coincidencia de contraseña:', match); // Debugging
             if (match) {
-                const token = jsonwebtoken_1.default.sign({ id: usuario.id_user }, SECRET_KEY, { expiresIn: '30m' });
-                const usuarioId = jsonwebtoken_1.default.sign({ usuarioId: usuario.id_user }, SECRET_KEY, { expiresIn: '30m' });
-                const permiso = jsonwebtoken_1.default.sign({ permiso: usuario.permiso }, SECRET_KEY, { expiresIn: '30m' });
-                return res.json({ token, usuarioId, permiso });
+                const token = jsonwebtoken_1.default.sign({ id_user: usuario.id_user, type: usuario.type }, SECRET_KEY);
+                return res.json({ token });
             }
             else {
                 return res.status(401).json({ message: 'Usuario o contraseña incorrecto' });

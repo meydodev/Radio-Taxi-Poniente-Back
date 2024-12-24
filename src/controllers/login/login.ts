@@ -36,7 +36,7 @@ router.post('/verify', async (req: Request, res: Response)=> {
             //console.log('Coincidencia de contraseña:', match); // Debugging
 
             if (match) {
-                const token = jwt.sign({ id_user: usuario.id_user, type: usuario.type }, SECRET_KEY, { expiresIn: '30m' });
+                const token = jwt.sign({ id_user: usuario.id_user, type: usuario.type }, SECRET_KEY);
                 return res.json({ token });
             } else {
                 return res.status(401).json({ message: 'Usuario o contraseña incorrecto' });

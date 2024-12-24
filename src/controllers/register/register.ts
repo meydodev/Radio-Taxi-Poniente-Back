@@ -11,8 +11,6 @@ router.post('/new-user', async (req: Request, res: Response) => {
         // Validar los datos de entrada
         const { name, type='user', surnames, password, email, license, keyAccess,} = req.body;
 
-        
-
         if (!email ||  !password || !name || !type || !surnames || !license)  {
             res.status(400).json({ message: 'Todos los campos son obligatorios' });
             return;
