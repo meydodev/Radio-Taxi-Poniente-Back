@@ -92,40 +92,4 @@ router.delete('/deleteUser/:id_user', (req, res) => __awaiter(void 0, void 0, vo
         res.status(400).json({ error: 'Token inválido o error interno.' });
     }
 }));
-router.post('/start-speaking', (req, res) => {
-    const { id_user } = req.body;
-    try {
-        const decodedIdUser = (0, decode_token_1.default)(id_user);
-        if (currentSpeaker) {
-            return res.status(403).json({ error: 'Otro usuario ya está hablando' });
-        }
-        currentSpeaker = decodedIdUser;
-        if (req.io) {
-            req.io.emit('start-speaking', { id_user: decodedIdUser });
-        }
-        res.status(200).json({ message: 'Usuario autorizado para hablar' });
-    }
-    catch (err) {
-        console.error('[START SPEAKING] Error decoding token:', err);
-        res.status(400).json({ error: 'Token inválido.' });
-    }
-});
-router.post('/stop-speaking', (req, res) => {
-    const { id_user } = req.body;
-    try {
-        const decodedIdUser = (0, decode_token_1.default)(id_user);
-        if (currentSpeaker !== decodedIdUser) {
-            return res.status(403).json({ error: 'Este usuario no tiene el control del canal' });
-        }
-        currentSpeaker = null;
-        if (req.io) {
-            req.io.emit('stop-speaking', { id_user: decodedIdUser });
-        }
-        res.status(200).json({ message: 'Canal liberado' });
-    }
-    catch (err) {
-        console.error('[STOP SPEAKING] Error decoding token:', err);
-        res.status(400).json({ error: 'Token inválido.' });
-    }
-});
 exports.default = router;
