@@ -6,6 +6,7 @@ import channel1 from './controllers/channel1/channel1';
 import cors from 'cors';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import path from 'path';
 
 const app = express();
 app.use(cors({
@@ -14,7 +15,10 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+
 app.use(express.json());
+
+app.use('/uploads', express.static(path.join(__dirname, '../dist/uploads')));
 
 const server = http.createServer(app);
 

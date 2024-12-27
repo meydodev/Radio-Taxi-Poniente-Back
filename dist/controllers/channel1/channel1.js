@@ -15,8 +15,39 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const db_1 = __importDefault(require("../../db/db"));
 const decode_token_1 = __importDefault(require("../../functions/decode-token"));
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const router = express_1.default.Router();
-let currentSpeaker = null;
+// Crear directorio si no existe
+const uploadDir = path.join(__dirname, '../../../dist/uploads/audio');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+// Configuración de Multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir); // Guardar en el directorio definido
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, uniqueSuffix + path.extname(file.originalname)); // Nombre único
+    },
+});
+const upload = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        // Validar tipo de archivo
+        if (file.mimetype.startsWith('audio/')) {
+            cb(null, true);
+        }
+        else {
+            console.log('Archivo no válido:', file.mimetype);
+            cb(new Error('Solo se permiten archivos de audio'));
+        }
+    },
+    limits: { fileSize: 10 * 1024 * 1024 },
+});
 router.get('/getUsers', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Iniciar transacción
@@ -90,6 +121,97 @@ router.delete('/deleteUser/:id_user', (req, res) => __awaiter(void 0, void 0, vo
     catch (err) {
         console.error('Error al procesar eliminación del usuario:', err);
         res.status(400).json({ error: 'Token inválido o error interno.' });
+    }
+}));
+router.post('/upload-audio', (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            console.error('Error de Multer:', err.message);
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        else if (err) {
+            console.error('Error al subir el archivo:', err.message);
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        next();
+    });
+}, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('Solicitud recibida en /upload-audio');
+    // Verificar si se recibió un archivo
+    if (!req.file) {
+        console.log('No se recibió ningún archivo en la solicitud');
+        return res.status(400).json({ success: false, message: 'No se recibió un archivo.' });
+    }
+    console.log('Archivo recibido:', req.file);
+    // Ruta relativa para guardar en la base de datos
+    const audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio/${req.file.filename}`;
+    const userId = req.body.userId; // Asegúrate de enviar el ID del usuario en la solicitud
+    console.log('Datos procesados - Audio URL:', audioUrl, 'User ID:', userId);
+    // Validar userId
+    if (!userId) {
+        console.log('El ID del usuario no fue proporcionado');
+        return res.status(400).json({ success: false, message: 'El ID del usuario es requerido.' });
+    }
+    try {
+        console.log('Iniciando transacción en la base de datos');
+        // Iniciar la transacción
+        yield new Promise((resolve, reject) => {
+            db_1.default.beginTransaction((err) => {
+                if (err) {
+                    console.error('Error al iniciar la transacción:', err);
+                    return reject(err);
+                }
+                resolve(null);
+            });
+        });
+        console.log('Transacción iniciada con éxito');
+        // Guardar el audio en la base de datos
+        const insertQuery = `
+        INSERT INTO audio_uploads (id_user, audio_url, id_channel)
+        VALUES (?, ?, ?)
+      `;
+        yield new Promise((resolve, reject) => {
+            db_1.default.query(insertQuery, [userId, audioUrl, 1], (error, results) => {
+                if (error) {
+                    console.error('Error al insertar datos en la base de datos:', error);
+                    return reject(error);
+                }
+                console.log('Datos insertados en la base de datos:', results);
+                resolve(results);
+            });
+        });
+        // Confirmar la transacción
+        yield new Promise((resolve, reject) => {
+            db_1.default.commit((err) => {
+                if (err) {
+                    console.error('Error al confirmar la transacción:', err);
+                    return reject(err);
+                }
+                console.log('Transacción confirmada con éxito');
+                resolve(null);
+            });
+        });
+        // Emitir el evento con Socket.IO
+        if (req.io) {
+            console.log('Emitiendo evento de audio subido al canal');
+            req.io.emit('audio-uploaded-channel1', { audioUrl, userId });
+        }
+        else {
+            console.log('Socket.IO no disponible en la solicitud');
+        }
+        // Respuesta exitosa
+        res.status(200).json({ success: true, audioUrl });
+    }
+    catch (error) {
+        console.error('Error al procesar la solicitud:', error);
+        // Revertir la transacción
+        yield new Promise((resolve) => {
+            db_1.default.rollback(() => {
+                console.log('Transacción revertida');
+                resolve(null);
+            });
+        });
+        res.status(500).json({ success: false, message: 'Error interno del servidor.' });
     }
 }));
 exports.default = router;

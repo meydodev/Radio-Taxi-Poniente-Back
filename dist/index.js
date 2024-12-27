@@ -11,6 +11,7 @@ const channel1_1 = __importDefault(require("./controllers/channel1/channel1"));
 const cors_1 = __importDefault(require("cors"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
+const path_1 = __importDefault(require("path"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
     origin: '*',
@@ -18,6 +19,7 @@ app.use((0, cors_1.default)({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express_1.default.json());
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../dist/uploads')));
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
     cors: {
