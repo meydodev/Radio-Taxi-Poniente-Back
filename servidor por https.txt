@@ -4,7 +4,9 @@ import login from './controllers/login/login';
 import home from './controllers/home/home';
 import channel1 from './controllers/channel1/channel1';
 import cors from 'cors';
+import https from 'https'; // Cambiado a HTTPS
 import { Server as SocketIOServer } from 'socket.io';
+import fs from 'fs';
 import path from 'path';
 
 const app = express();
@@ -19,13 +21,16 @@ app.use(express.json());
 
 app.use('/uploads', express.static(path.join(__dirname, '../dist/uploads')));
 
-// Crear el servidor HTTP
-const httpServer = app.listen(3000, () => {
-    console.log('Servidor HTTP iniciado en http://localhost:3000');
-});
+// Leer los archivos del certificado
+const privateKey = fs.readFileSync(path.join(__dirname, './cert/key.pem'), 'utf8');
+const certificate = fs.readFileSync(path.join(__dirname, './cert/cert.pem'), 'utf8');
+const credentials = { key: privateKey, cert: certificate };
 
-// Configurar Socket.IO con el servidor HTTP
-const io = new SocketIOServer(httpServer, {
+// Crear el servidor HTTPS
+const httpsServer = https.createServer(credentials, app);
+
+// Configurar Socket.IO con el servidor HTTPS
+const io = new SocketIOServer(httpsServer, {
     cors: {
         origin: '*',
         methods: ['GET', 'POST'],
@@ -87,4 +92,9 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('Cliente desconectado de Socket.IO');
     });
+});
+
+// Iniciar el servidor HTTPS
+httpsServer.listen(3000, () => {
+    console.log('Servidor HTTPS iniciado en https://localhost:3000');
 });
