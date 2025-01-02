@@ -6,16 +6,8 @@ import channel1 from './controllers/channel1/channel1';
 import cors from 'cors';
 import { Server as SocketIOServer } from 'socket.io';
 import path from 'path';
-import https from 'https';
-import fs from 'fs';
 
 const app = express();
-
-// Cargar los certificados generados con mkcert
-const httpsOptions = {
-    key: fs.readFileSync(path.join(__dirname, 'cert/localhost+2-key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, 'cert/localhost+2.pem')),
-};
 
 // Configurar CORS
 app.use(cors({
@@ -27,15 +19,13 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../dist/uploads')));
 
-// Crear el servidor HTTPS
-const httpsServer = https.createServer(httpsOptions, app);
-
-httpsServer.listen(3000, () => {
-    console.log('Servidor HTTPS iniciado en https://localhost:3000');
+// Crear el servidor HTTP
+const httpServer = app.listen(3000, () => {
+    console.log('Servidor iniciado en http://localhost:3000');
 });
 
-// Configurar Socket.IO con el servidor HTTPS
-const io = new SocketIOServer(httpsServer, {
+// Configurar Socket.IO con el servidor HTTP
+const io = new SocketIOServer(httpServer, {
     cors: {
         origin: '*',
         methods: ['GET', 'POST'],
