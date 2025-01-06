@@ -59,7 +59,7 @@ router.get('/getUsers', (req, res) => __awaiter(void 0, void 0, void 0, function
             });
         });
         const query = `
-            SELECT u.id_user, u.name, u.license 
+            SELECT DISTINCT u.id_user, u.name, u.license 
             FROM connected_users cu
             JOIN users u ON cu.id_user = u.id_user
             WHERE cu.channel_id = 1
@@ -108,8 +108,10 @@ router.delete('/deleteUser/:id_user', (req, res) => __awaiter(void 0, void 0, vo
                             res.status(500).json({ error: 'Error al confirmar la transacción.' });
                         });
                     }
+                    // Emitir el evento con el id_user eliminado
                     if (req.io) {
                         req.io.emit('user-exit-channel1', {
+                            id_user: decodedIdUser, // Incluir el ID del usuario eliminado
                             message: 'Usuario eliminado en el canal 1',
                         });
                     }
@@ -195,6 +197,7 @@ router.post('/upload-audio', (req, res, next) => {
         if (req.io) {
             console.log('Emitiendo evento de audio subido al canal');
             req.io.emit('audio-uploaded-channel1', { audioUrl, userId });
+            console.log('Evento emitido con éxito con el usuario:', userId);
         }
         else {
             console.log('Socket.IO no disponible en la solicitud');

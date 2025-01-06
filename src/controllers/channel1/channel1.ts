@@ -7,6 +7,7 @@ const fs = require('fs');
 
 
 
+
 const router = express.Router();
 
 
@@ -55,7 +56,7 @@ router.get('/getUsers', async (req, res) => {
         });
 
         const query = `
-            SELECT u.id_user, u.name, u.license 
+            SELECT DISTINCT u.id_user, u.name, u.license 
             FROM connected_users cu
             JOIN users u ON cu.id_user = u.id_user
             WHERE cu.channel_id = 1
@@ -87,53 +88,55 @@ router.get('/getUsers', async (req, res) => {
 
 
 router.delete('/deleteUser/:id_user', async (req, res) => {
-    const { id_user } = req.params;
+  const { id_user } = req.params;
 
-    try {
-        const decodedIdUser = decodeToken(id_user);
+  try {
+      const decodedIdUser = decodeToken(id_user);
 
-        connection.beginTransaction((err) => {
-            if (err) throw err;
+      connection.beginTransaction((err) => {
+          if (err) throw err;
 
-            connection.query(
-                'DELETE FROM connected_users WHERE id_user = ?',
-                [decodedIdUser],
-                (error, result) => {
-                    if (error) {
-                        return connection.rollback(() => {
-                            console.error('Error al borrar usuario:', error);
-                            res.status(500).json({ error: 'Error al borrar usuario.' });
-                        });
-                    }
+          connection.query(
+              'DELETE FROM connected_users WHERE id_user = ?',
+              [decodedIdUser],
+              (error, result) => {
+                  if (error) {
+                      return connection.rollback(() => {
+                          console.error('Error al borrar usuario:', error);
+                          res.status(500).json({ error: 'Error al borrar usuario.' });
+                      });
+                  }
 
-                    connection.commit((commitErr) => {
-                        if (commitErr) {
-                            return connection.rollback(() => {
-                                console.error('Error al confirmar la transacción:', commitErr);
-                                res.status(500).json({ error: 'Error al confirmar la transacción.' });
-                            });
-                        }
+                  connection.commit((commitErr) => {
+                      if (commitErr) {
+                          return connection.rollback(() => {
+                              console.error('Error al confirmar la transacción:', commitErr);
+                              res.status(500).json({ error: 'Error al confirmar la transacción.' });
+                          });
+                      }
 
-                        if ((req as any).io) {
-                            (req as any).io.emit('user-exit-channel1', {
-                                message: 'Usuario eliminado en el canal 1',
-                            });
-                        }
+                      // Emitir el evento con el id_user eliminado
+                      if ((req as any).io) {
+                          (req as any).io.emit('user-exit-channel1', {
+                              id_user: decodedIdUser, // Incluir el ID del usuario eliminado
+                              message: 'Usuario eliminado en el canal 1',
+                          });
+                      }
 
-                        res.status(200).json({ message: 'Usuario eliminado correctamente.' });
-                    });
-                }
-            );
-        });
-    } catch (err) {
-        console.error('Error al procesar eliminación del usuario:', err);
-        res.status(400).json({ error: 'Token inválido o error interno.' });
-    }
+                      res.status(200).json({ message: 'Usuario eliminado correctamente.' });
+                  });
+              }
+          );
+      });
+  } catch (err) {
+      console.error('Error al procesar eliminación del usuario:', err);
+      res.status(400).json({ error: 'Token inválido o error interno.' });
+  }
 });
 
-router.post(
-  '/upload-audio',
-  (req, res, next) => {
+
+
+router.post('/upload-audio',(req, res, next) => {
     upload.single('file')(req, res, (err: any) => {
       if (err instanceof multer.MulterError) {
         console.error('Error de Multer:', err.message);
@@ -215,6 +218,7 @@ router.post(
       if (req.io) {
         console.log('Emitiendo evento de audio subido al canal');
         req.io.emit('audio-uploaded-channel1', { audioUrl, userId });
+        console.log('Evento emitido con éxito con el usuario:', userId);
       } else {
         console.log('Socket.IO no disponible en la solicitud');
       }

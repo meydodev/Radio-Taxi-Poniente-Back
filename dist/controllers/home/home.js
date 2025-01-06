@@ -29,36 +29,55 @@ router.post('/addUserChannel1', (req, res) => __awaiter(void 0, void 0, void 0, 
         console.error('Error decoding token:', err);
         return res.status(400).json({ error: 'Invalid token' });
     }
-    //console.log('Decoded ID:', decodedIdUser);
     db_1.default.beginTransaction((err) => {
         if (err) {
             console.error('Error al iniciar la transacción:', err);
-            return res.status(500).send({ error: 'Error al iniciar la transacción.' });
+            return res.status(500).json({ error: 'Error al iniciar la transacción.' });
         }
-        db_1.default.query('INSERT INTO connected_users (id_user, channel_id, muted) VALUES (?, ?, ?)', [decodedIdUser, channelId, muted], (error, result) => {
+        const insertQuery = 'INSERT INTO connected_users (id_user, channel_id, muted) VALUES (?, ?, ?)';
+        const insertParams = [decodedIdUser, channelId, muted];
+        db_1.default.query(insertQuery, insertParams, (error, result) => {
             if (error) {
                 return db_1.default.rollback(() => {
                     console.error('Error al insertar usuario en la tabla:', error);
-                    res.status(500).send({ error: 'Error al insertar usuario en la tabla.' });
+                    res.status(500).json({ error: 'Error al insertar usuario en la tabla.' });
                 });
             }
             db_1.default.commit((commitErr) => {
                 if (commitErr) {
                     return db_1.default.rollback(() => {
                         console.error('Error al confirmar la transacción:', commitErr);
-                        res.status(500).send({ error: 'Error al confirmar la transacción.' });
+                        res.status(500).json({ error: 'Error al confirmar la transacción.' });
                     });
                 }
-                // Emitir evento con Socket.IO usando req.io
-                if (req.io) {
-                    req.io.emit('new-user-channel1', {
-                        message: 'Nuevo usuario agregado al canal 1',
-                    });
-                }
-                else {
-                    console.error('Socket.IO no está disponible en req');
-                }
-                res.status(201).send({ message: 'Usuario agregado al canal.' });
+                const selectQuery = 'SELECT id_user, name, license FROM users WHERE id_user = ?';
+                db_1.default.query(selectQuery, [decodedIdUser], (userError, userResult) => {
+                    if (userError) {
+                        return db_1.default.rollback(() => {
+                            console.error('Error al obtener datos del usuario:', userError);
+                            res.status(500).json({ error: 'Error al obtener datos del usuario.' });
+                        });
+                    }
+                    if (!Array.isArray(userResult) || userResult.length === 0) {
+                        console.error('No se encontraron datos del usuario.');
+                        return res.status(404).json({ error: 'Usuario no encontrado.' });
+                    }
+                    const user = userResult[0];
+                    // Emitir evento con Socket.IO si está disponible
+                    if (req.io) {
+                        setTimeout(() => {
+                            req.io.emit('new-user-channel1', {
+                                id_user: user.id_user,
+                                name: user.name,
+                                license: user.license,
+                            });
+                        }, 1000); // Retraso de 1 segundo
+                    }
+                    else {
+                        console.error('Socket.IO no está disponible en req');
+                    }
+                    res.status(201).json({ message: 'Usuario agregado al canal.' });
+                });
             });
         });
     });
