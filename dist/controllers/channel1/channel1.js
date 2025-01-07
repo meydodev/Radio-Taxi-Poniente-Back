@@ -147,10 +147,12 @@ router.post('/upload-audio', (req, res, next) => {
     console.log('Archivo recibido:', req.file);
     // Ruta relativa para guardar en la base de datos
     const audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio/${req.file.filename}`;
-    const userId = req.body.userId; // Asegúrate de enviar el ID del usuario en la solicitud
-    console.log('Datos procesados - Audio URL:', audioUrl, 'User ID:', userId);
+    const userId = req.body.id_user; // Asegúrate de enviar el ID del usuario en la solicitud
+    const id_user = (0, decode_token_1.default)(userId);
+    console.log('Datos procesados - Audio URL:', audioUrl, 'User ID:', id_user);
+    console.log('Usuario recivido:', id_user);
     // Validar userId
-    if (!userId) {
+    if (!id_user) {
         console.log('El ID del usuario no fue proporcionado');
         return res.status(400).json({ success: false, message: 'El ID del usuario es requerido.' });
     }
@@ -173,12 +175,12 @@ router.post('/upload-audio', (req, res, next) => {
         VALUES (?, ?, ?)
       `;
         yield new Promise((resolve, reject) => {
-            db_1.default.query(insertQuery, [userId, audioUrl, 1], (error, results) => {
+            db_1.default.query(insertQuery, [id_user, audioUrl, 1], (error, results) => {
                 if (error) {
                     console.error('Error al insertar datos en la base de datos:', error);
                     return reject(error);
                 }
-                console.log('Datos insertados en la base de datos:', results);
+                //console.log('Datos insertados en la base de datos:', results);
                 resolve(results);
             });
         });
@@ -197,7 +199,7 @@ router.post('/upload-audio', (req, res, next) => {
         if (req.io) {
             console.log('Emitiendo evento de audio subido al canal');
             req.io.emit('audio-uploaded-channel1', { audioUrl, userId });
-            console.log('Evento emitido con éxito con el usuario:', userId);
+            console.log('Evento emitido con éxito con el usuario:', id_user);
         }
         else {
             console.log('Socket.IO no disponible en la solicitud');

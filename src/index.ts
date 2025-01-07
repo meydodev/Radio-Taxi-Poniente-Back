@@ -48,43 +48,9 @@ app.use('/channel1', channel1);
 
 // Eventos de Socket.IO
 io.on('connection', (socket) => {
-    console.log('Cliente conectado a Socket.IO');
-
-    socket.on('message', (message) => {
-        io.emit('message', message); // Envía el mensaje a todos los clientes conectados
-    });
-
-    // Manejo de ofertas
-    socket.on('offer', (data) => {
-        if (!data || !data.offer || !data.offer.type || !data.offer.sdp) {
-            console.error('Oferta inválida recibida:', data);
-            return;
-        }
-        console.log(`Oferta recibida de ${socket.id}:`, data);
-        socket.broadcast.emit('offer', data);
-    });
-
-    // Manejo de respuestas
-    socket.on('answer', (data) => {
-        if (!data || !data.answer || !data.answer.type || !data.answer.sdp) {
-            console.error('Respuesta inválida recibida:', data);
-            return;
-        }
-        console.log(`Respuesta recibida de ${socket.id}:`, data);
-        socket.broadcast.emit('answer', data);
-    });
-
-    // Manejo de candidatos ICE
-    socket.on('ice-candidate', (data) => {
-        if (!data || !data.candidate) {
-            console.error('Candidato ICE inválido recibido:', data);
-            return;
-        }
-        console.log(`Candidato ICE recibido de ${socket.id}:`, data);
-        socket.broadcast.emit('ice-candidate', data);
-    });
+    //console.log('Cliente conectado a Socket.IO');
 
     socket.on('disconnect', () => {
-        console.log('Cliente desconectado de Socket.IO');
+       // console.log('Cliente desconectado de Socket.IO');
     });
 });
