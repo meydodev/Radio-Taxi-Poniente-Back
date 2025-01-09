@@ -219,4 +219,47 @@ router.post('/upload-audio', (req, res, next) => {
         res.status(500).json({ success: false, message: 'Error interno del servidor.' });
     }
 }));
+router.delete('/delete-audios', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const directory = path.join(__dirname, '../../../dist/uploads/audio');
+    try {
+        console.log('Eliminando audios en el directorio:', directory);
+        // Verificar si el directorio existe
+        if (!fs.existsSync(directory)) {
+            console.log('El directorio no existe, no hay archivos para eliminar.');
+            return res.status(200).json({ success: true, message: 'No hay audios para eliminar.' });
+        }
+        // Leer los archivos en el directorio
+        const files = yield new Promise((resolve, reject) => {
+            fs.readdir(directory, (err, files) => {
+                if (err) {
+                    console.error('Error al leer el directorio:', err);
+                    return reject(err);
+                }
+                resolve(files);
+            });
+        });
+        console.log('Archivos encontrados en el directorio:', files);
+        // Eliminar cada archivo encontrado
+        for (const file of files) {
+            const filePath = path.join(directory, file);
+            console.log(`Intentando eliminar archivo: ${filePath}`);
+            yield new Promise((resolve, reject) => {
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.error(`Error al eliminar el archivo ${filePath}:`, err);
+                        return reject(err);
+                    }
+                    console.log(`Archivo eliminado correctamente: ${filePath}`);
+                    resolve(null);
+                });
+            });
+        }
+        console.log('Todos los audios han sido eliminados.');
+        res.status(200).json({ success: true, message: 'Todos los audios han sido eliminados con éxito.' });
+    }
+    catch (error) {
+        console.error('Error al eliminar los audios:', error);
+        res.status(500).json({ success: false, message: 'Error al eliminar los audios.', error });
+    }
+}));
 exports.default = router;
