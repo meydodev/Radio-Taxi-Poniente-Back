@@ -2,6 +2,7 @@ import express from 'express';
 import register from './controllers/register/register';
 import login from './controllers/login/login';
 import home from './controllers/home/home';
+import profile from './controllers/profile/profile';
 import channel1 from './controllers/channel1/channel1';
 import cors from 'cors';
 import { Server as SocketIOServer } from 'socket.io';
@@ -44,6 +45,7 @@ app.use((req, res, next) => {
 app.use('/login', login);
 app.use('/register', register);
 app.use('/home', home);
+app.use('/profile', profile);
 app.use('/channel1', channel1);
 
 // Eventos de Socket.IO

@@ -21,7 +21,7 @@ const SECRET_KEY = 'dK7$gB@5mN!2pX&9qV^8yZ*3xR6+L0zC4hW1F!';
 router.use(express_1.default.json());
 router.post('/verify', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
-    console.log(`Intento de login con email: ${email}`); // Debugging
+    //console.log(`Intento de login con email: ${email}`); // Debugging
     if (!email || !password) {
         return res.status(400).json({ message: 'Email y contraseña son requeridos' });
     }

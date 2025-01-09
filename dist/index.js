@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const register_1 = __importDefault(require("./controllers/register/register"));
 const login_1 = __importDefault(require("./controllers/login/login"));
 const home_1 = __importDefault(require("./controllers/home/home"));
+const profile_1 = __importDefault(require("./controllers/profile/profile"));
 const channel1_1 = __importDefault(require("./controllers/channel1/channel1"));
 const cors_1 = __importDefault(require("cors"));
 const socket_io_1 = require("socket.io");
@@ -42,6 +43,7 @@ app.use((req, res, next) => {
 app.use('/login', login_1.default);
 app.use('/register', register_1.default);
 app.use('/home', home_1.default);
+app.use('/profile', profile_1.default);
 app.use('/channel1', channel1_1.default);
 // Eventos de Socket.IO
 io.on('connection', (socket) => {
