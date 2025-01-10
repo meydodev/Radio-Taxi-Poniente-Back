@@ -138,26 +138,26 @@ router.post('/upload-audio', (req, res, next) => {
         next();
     });
 }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('Solicitud recibida en /upload-audio');
+    //console.log('Solicitud recibida en /upload-audio');
     // Verificar si se recibió un archivo
     if (!req.file) {
         console.log('No se recibió ningún archivo en la solicitud');
         return res.status(400).json({ success: false, message: 'No se recibió un archivo.' });
     }
-    console.log('Archivo recibido:', req.file);
+    //console.log('Archivo recibido:', req.file);
     // Ruta relativa para guardar en la base de datos
     const audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio/${req.file.filename}`;
     const userId = req.body.id_user; // Asegúrate de enviar el ID del usuario en la solicitud
     const id_user = (0, decode_token_1.default)(userId);
-    console.log('Datos procesados - Audio URL:', audioUrl, 'User ID:', id_user);
-    console.log('Usuario recivido:', id_user);
+    //console.log('Datos procesados - Audio URL:', audioUrl, 'User ID:', id_user);
+    //console.log('Usuario recivido:',id_user)
     // Validar userId
     if (!id_user) {
         console.log('El ID del usuario no fue proporcionado');
         return res.status(400).json({ success: false, message: 'El ID del usuario es requerido.' });
     }
     try {
-        console.log('Iniciando transacción en la base de datos');
+        //console.log('Iniciando transacción en la base de datos');
         // Iniciar la transacción
         yield new Promise((resolve, reject) => {
             db_1.default.beginTransaction((err) => {
@@ -168,7 +168,7 @@ router.post('/upload-audio', (req, res, next) => {
                 resolve(null);
             });
         });
-        console.log('Transacción iniciada con éxito');
+        //console.log('Transacción iniciada con éxito');
         // Guardar el audio en la base de datos
         const insertQuery = `
         INSERT INTO audio_uploads (id_user, audio_url, id_channel)
@@ -191,15 +191,15 @@ router.post('/upload-audio', (req, res, next) => {
                     console.error('Error al confirmar la transacción:', err);
                     return reject(err);
                 }
-                console.log('Transacción confirmada con éxito');
+                //console.log('Transacción confirmada con éxito');
                 resolve(null);
             });
         });
         // Emitir el evento con Socket.IO
         if (req.io) {
-            console.log('Emitiendo evento de audio subido al canal');
+            //console.log('Emitiendo evento de audio subido al canal');
             req.io.emit('audio-uploaded-channel1', { audioUrl, userId });
-            console.log('Evento emitido con éxito con el usuario:', id_user);
+            //console.log('Evento emitido con éxito con el usuario:', id_user);
         }
         else {
             console.log('Socket.IO no disponible en la solicitud');
