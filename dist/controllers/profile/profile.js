@@ -82,10 +82,10 @@ router.get('/getDataUser', (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 router.put('/update-profile', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log('Función llamada: /update-profile');
+        //console.log('Función llamada: /update-profile');
         // Extraer el token del encabezado de autorización
         const authHeader = req.headers.authorization;
-        console.log('Token recibido:', authHeader);
+        //console.log('Token recibido:', authHeader);
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             console.error('Token de autenticación no proporcionado o malformado');
             return res.status(400).json({ message: 'Token de autenticación requerido' });
@@ -166,6 +166,63 @@ router.put('/update-profile', (req, res) => __awaiter(void 0, void 0, void 0, fu
             });
             res.status(500).json({ message: 'Error al actualizar el perfil' });
         }
+    }
+    catch (error) {
+        console.error('Error interno del servidor:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+}));
+router.delete('/deleteUser', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const authHeader = req.headers.authorization;
+    //console.log('Función llamada: /deleteUser');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.error('Token de autenticación no proporcionado o malformado');
+        return res.status(400).json({ message: 'Token de autenticación requerido' });
+    }
+    const token = authHeader.split(' ')[1];
+    const id_user = (0, decode_token_1.default)(token);
+    if (!id_user) {
+        //console.error('Token inválido o no contiene id_user');
+        return res.status(400).json({ message: 'Token inválido o no contiene id_user' });
+    }
+    try {
+        // Inicia la transacción
+        yield new Promise((resolve, reject) => {
+            db_1.default.beginTransaction((transactionError) => __awaiter(void 0, void 0, void 0, function* () {
+                if (transactionError) {
+                    console.error('Error al iniciar la transacción:', transactionError);
+                    return reject(transactionError);
+                }
+                try {
+                    const query = 'DELETE FROM users WHERE id_user = ?';
+                    yield new Promise((resolveQuery, rejectQuery) => {
+                        db_1.default.query(query, [id_user], (queryError, results) => {
+                            if (queryError) {
+                                console.error('Error al ejecutar la consulta:', queryError);
+                                return rejectQuery(queryError);
+                            }
+                            resolveQuery();
+                        });
+                    });
+                    // Confirma la transacción
+                    db_1.default.commit((commitError) => {
+                        if (commitError) {
+                            console.error('Error al confirmar la transacción:', commitError);
+                            return reject(commitError);
+                        }
+                        resolve();
+                    });
+                }
+                catch (error) {
+                    console.error('Error durante la transacción:', error);
+                    // Si ocurre un error, deshace la transacción
+                    db_1.default.rollback(() => {
+                        reject(error);
+                    });
+                }
+            }));
+        });
+        res.status(200).json({ message: 'Usuario eliminado correctamente' });
     }
     catch (error) {
         console.error('Error interno del servidor:', error);

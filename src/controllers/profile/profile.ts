@@ -80,11 +80,11 @@ router.get('/getDataUser', async (req, res) => {
 
 router.put('/update-profile', async (req: Request, res: Response) => {
     try {
-        console.log('Función llamada: /update-profile');
+        //console.log('Función llamada: /update-profile');
 
         // Extraer el token del encabezado de autorización
         const authHeader = req.headers.authorization;
-        console.log('Token recibido:', authHeader);
+        //console.log('Token recibido:', authHeader);
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             console.error('Token de autenticación no proporcionado o malformado');
@@ -184,6 +184,78 @@ router.put('/update-profile', async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
+
+
+
+
+
+router.delete('/deleteUser', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+
+    //console.log('Función llamada: /deleteUser');
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.error('Token de autenticación no proporcionado o malformado');
+        return res.status(400).json({ message: 'Token de autenticación requerido' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const id_user = decodeToken(token);
+
+    if (!id_user) {
+       //console.error('Token inválido o no contiene id_user');
+        return res.status(400).json({ message: 'Token inválido o no contiene id_user' });
+    }
+
+    try {
+        // Inicia la transacción
+        await new Promise<void>((resolve, reject) => {
+            connection.beginTransaction(async (transactionError) => {
+                if (transactionError) {
+                    console.error('Error al iniciar la transacción:', transactionError);
+                    return reject(transactionError);
+                }
+
+                try {
+                    const query = 'DELETE FROM users WHERE id_user = ?';
+                    await new Promise<void>((resolveQuery, rejectQuery) => {
+                        connection.query(query, [id_user], (queryError, results) => {
+                            if (queryError) {
+                                console.error('Error al ejecutar la consulta:', queryError);
+                                return rejectQuery(queryError);
+                            }
+                            resolveQuery();
+                        });
+                    });
+
+                    // Confirma la transacción
+                    connection.commit((commitError) => {
+                        if (commitError) {
+                            console.error('Error al confirmar la transacción:', commitError);
+                            return reject(commitError);
+                        }
+                        resolve();
+                    });
+                } catch (error) {
+                    console.error('Error durante la transacción:', error);
+
+                    // Si ocurre un error, deshace la transacción
+                    connection.rollback(() => {
+                        reject(error);
+                    });
+                }
+            });
+        });
+
+        res.status(200).json({ message: 'Usuario eliminado correctamente' });
+    } catch (error) {
+        console.error('Error interno del servidor:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+
+
 
 
 
