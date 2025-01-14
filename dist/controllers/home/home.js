@@ -23,7 +23,7 @@ router.post('/addUserChannel1', (req, res) => __awaiter(void 0, void 0, void 0, 
     try {
         // Decodificar el token
         decodedIdUser = (0, decode_token_1.default)(id_user);
-        console.log('Id decodificado:', decodedIdUser);
+        //console.log('Id decodificado:', decodedIdUser);
     }
     catch (err) {
         console.error('Error decoding token:', err);

@@ -92,7 +92,7 @@ router.put('/update-profile', (req, res) => __awaiter(void 0, void 0, void 0, fu
         }
         const token = authHeader.split(' ')[1];
         const decodedUser = (0, decode_token_1.default)(token);
-        console.log('Token decodificado:', decodedUser);
+        //console.log('Token decodificado:', decodedUser);
         if (!decodedUser) {
             console.error('Token inválido o no contiene id_user');
             return res.status(400).json({ message: 'Token inválido o no contiene id_user' });

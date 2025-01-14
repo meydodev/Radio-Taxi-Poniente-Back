@@ -12,7 +12,7 @@ router.post('/addUserChannel1', async (req, res) => {
     try {
         // Decodificar el token
         decodedIdUser = decodeToken(id_user);
-        console.log('Id decodificado:', decodedIdUser);
+        //console.log('Id decodificado:', decodedIdUser);
     } catch (err) {
         console.error('Error decoding token:', err);
         return res.status(400).json({ error: 'Invalid token' });
