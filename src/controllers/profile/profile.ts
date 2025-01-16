@@ -174,8 +174,8 @@ router.put('/update-profile', async (req: Request, res: Response) => {
         } catch (error) {
             // Revertir la transacción si ocurre un error
             console.error('Error durante la transacción, revirtiendo cambios:', error);
-            await new Promise<void>((resolve) => {
-                connection.rollback(() => resolve());
+        await new Promise<void>((resolve) => {
+            connection.rollback(() => resolve());
             });
             res.status(500).json({ message: 'Error al actualizar el perfil' });
         }
