@@ -20,7 +20,7 @@ const path = require('path');
 const fs = require('fs');
 const router = express_1.default.Router();
 // Crear directorio si no existe
-const uploadDir = path.join(__dirname, '../../../dist/uploads/audio');
+const uploadDir = path.join(__dirname, '../../../dist/uploads/audio_channel_1');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -60,9 +60,8 @@ router.get('/getUsers', (req, res) => __awaiter(void 0, void 0, void 0, function
         });
         const query = `
             SELECT DISTINCT u.id_user, u.name, u.license 
-            FROM connected_users cu
+            FROM connected_users_channel_1 cu
             JOIN users u ON cu.id_user = u.id_user
-            WHERE cu.channel_id = 1
         `;
         const results = yield new Promise((resolve, reject) => {
             db_1.default.query(query, (error, results) => {
@@ -94,7 +93,7 @@ router.delete('/deleteUser/:id_user', (req, res) => __awaiter(void 0, void 0, vo
         db_1.default.beginTransaction((err) => {
             if (err)
                 throw err;
-            db_1.default.query('DELETE FROM connected_users WHERE id_user = ?', [decodedIdUser], (error, result) => {
+            db_1.default.query('DELETE FROM connected_users_channel_1 WHERE id_user = ?', [decodedIdUser], (error, result) => {
                 if (error) {
                     return db_1.default.rollback(() => {
                         console.error('Error al borrar usuario:', error);
@@ -146,7 +145,7 @@ router.post('/upload-audio', (req, res, next) => {
     }
     //console.log('Archivo recibido:', req.file);
     // Ruta relativa para guardar en la base de datos
-    const audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio/${req.file.filename}`;
+    const audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio_channel_1/${req.file.filename}`;
     const userId = req.body.id_user; // Asegúrate de enviar el ID del usuario en la solicitud
     const id_user = (0, decode_token_1.default)(userId);
     //console.log('Datos procesados - Audio URL:', audioUrl, 'User ID:', id_user);
@@ -171,11 +170,11 @@ router.post('/upload-audio', (req, res, next) => {
         //console.log('Transacción iniciada con éxito');
         // Guardar el audio en la base de datos
         const insertQuery = `
-        INSERT INTO audio_uploads (id_user, audio_url, id_channel)
-        VALUES (?, ?, ?)
+        INSERT INTO audio_uploads (id_user, audio_url)
+        VALUES (?, ?)
       `;
         yield new Promise((resolve, reject) => {
-            db_1.default.query(insertQuery, [id_user, audioUrl, 1], (error, results) => {
+            db_1.default.query(insertQuery, [id_user, audioUrl], (error, results) => {
                 if (error) {
                     console.error('Error al insertar datos en la base de datos:', error);
                     return reject(error);

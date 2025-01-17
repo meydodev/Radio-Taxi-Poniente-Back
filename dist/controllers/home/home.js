@@ -18,7 +18,7 @@ const decode_token_1 = __importDefault(require("../../functions/decode-token"));
 const router = express_1.default.Router();
 router.use(express_1.default.json());
 router.post('/addUserChannel1', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id_user, channelId = 1, muted = false } = req.body;
+    const { id_user, muted = false } = req.body;
     let decodedIdUser;
     try {
         // Decodificar el token
@@ -34,8 +34,8 @@ router.post('/addUserChannel1', (req, res) => __awaiter(void 0, void 0, void 0, 
             console.error('Error al iniciar la transacción:', err);
             return res.status(500).json({ error: 'Error al iniciar la transacción.' });
         }
-        const insertQuery = 'INSERT INTO connected_users (id_user, channel_id, muted) VALUES (?, ?, ?)';
-        const insertParams = [decodedIdUser, channelId, muted];
+        const insertQuery = 'INSERT INTO connected_users_channel_1 (id_user, muted) VALUES (?, ?)';
+        const insertParams = [decodedIdUser, muted];
         db_1.default.query(insertQuery, insertParams, (error, result) => {
             if (error) {
                 return db_1.default.rollback(() => {

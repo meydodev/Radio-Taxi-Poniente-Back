@@ -13,7 +13,7 @@ const router = express.Router();
 
 
 // Crear directorio si no existe
-const uploadDir = path.join(__dirname, '../../../dist/uploads/audio');
+const uploadDir = path.join(__dirname, '../../../dist/uploads/audio_channel_1');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -57,9 +57,8 @@ router.get('/getUsers', async (req, res) => {
 
         const query = `
             SELECT DISTINCT u.id_user, u.name, u.license 
-            FROM connected_users cu
+            FROM connected_users_channel_1 cu
             JOIN users u ON cu.id_user = u.id_user
-            WHERE cu.channel_id = 1
         `;
 
         const results = await new Promise((resolve, reject) => {
@@ -97,7 +96,7 @@ router.delete('/deleteUser/:id_user', async (req, res) => {
           if (err) throw err;
 
           connection.query(
-              'DELETE FROM connected_users WHERE id_user = ?',
+              'DELETE FROM connected_users_channel_1 WHERE id_user = ?',
               [decodedIdUser],
               (error, result) => {
                   if (error) {
@@ -159,7 +158,7 @@ router.post('/upload-audio',(req, res, next) => {
     //console.log('Archivo recibido:', req.file);
 
     // Ruta relativa para guardar en la base de datos
-    const audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio/${req.file.filename}`;
+    const audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio_channel_1/${req.file.filename}`;
 
     const userId = req.body.id_user; // Asegúrate de enviar el ID del usuario en la solicitud
     const id_user= decodeToken(userId);
@@ -190,11 +189,11 @@ router.post('/upload-audio',(req, res, next) => {
 
       // Guardar el audio en la base de datos
       const insertQuery = `
-        INSERT INTO audio_uploads (id_user, audio_url, id_channel)
-        VALUES (?, ?, ?)
+        INSERT INTO audio_uploads (id_user, audio_url)
+        VALUES (?, ?)
       `;
       await new Promise((resolve, reject) => {
-        connection.query(insertQuery, [id_user, audioUrl, 1], (error: any, results: any) => {
+        connection.query(insertQuery, [id_user, audioUrl], (error: any, results: any) => {
           if (error) {
             console.error('Error al insertar datos en la base de datos:', error);
             return reject(error);
