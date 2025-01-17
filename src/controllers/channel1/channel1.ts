@@ -5,12 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-
-
-
 const router = express.Router();
-
-
 
 // Crear directorio si no existe
 const uploadDir = path.join(__dirname, '../../../dist/uploads/audio_channel_1');
@@ -189,7 +184,7 @@ router.post('/upload-audio',(req, res, next) => {
 
       // Guardar el audio en la base de datos
       const insertQuery = `
-        INSERT INTO audio_uploads (id_user, audio_url)
+        INSERT INTO audio_uploads_channel_1 (id_user, audio_url)
         VALUES (?, ?)
       `;
       await new Promise((resolve, reject) => {
@@ -245,7 +240,7 @@ router.post('/upload-audio',(req, res, next) => {
 
 
 router.delete('/delete-audios', async (req, res) => {
-  const directory = path.join(__dirname, '../../../dist/uploads/audio');
+  const directory = path.join(__dirname, '../../../dist/uploads/audio_channel_1');
 
   try {
     console.log('Eliminando audios en el directorio:', directory);

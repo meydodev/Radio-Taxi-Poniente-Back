@@ -170,7 +170,7 @@ router.post('/upload-audio', (req, res, next) => {
         //console.log('Transacción iniciada con éxito');
         // Guardar el audio en la base de datos
         const insertQuery = `
-        INSERT INTO audio_uploads (id_user, audio_url)
+        INSERT INTO audio_uploads_channel_1 (id_user, audio_url)
         VALUES (?, ?)
       `;
         yield new Promise((resolve, reject) => {
@@ -219,7 +219,7 @@ router.post('/upload-audio', (req, res, next) => {
     }
 }));
 router.delete('/delete-audios', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const directory = path.join(__dirname, '../../../dist/uploads/audio');
+    const directory = path.join(__dirname, '../../../dist/uploads/audio_channel_1');
     try {
         console.log('Eliminando audios en el directorio:', directory);
         // Verificar si el directorio existe
