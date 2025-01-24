@@ -7,6 +7,7 @@ const fs = require('fs');
 
 const router = express.Router();
 
+
 // Crear directorio si no existe
 const uploadDir = path.join(__dirname, '../../../dist/uploads/audio_channel_1');
 if (!fs.existsSync(uploadDir)) {
@@ -41,42 +42,42 @@ const upload = multer({
 
 
 router.get('/getUsers', async (req, res) => {
-    try {
-        // Iniciar transacción
-        await new Promise((resolve, reject) => {
-            connection.beginTransaction((err) => {
-                if (err) return reject(err);
-                resolve(null);
-            });
-        });
+  try {
+    // Iniciar transacción
+    await new Promise((resolve, reject) => {
+      connection.beginTransaction((err) => {
+        if (err) return reject(err);
+        resolve(null);
+      });
+    });
 
-        const query = `
+    const query = `
             SELECT DISTINCT u.id_user, u.name, u.license 
             FROM connected_users_channel_1 cu
             JOIN users u ON cu.id_user = u.id_user
         `;
 
-        const results = await new Promise((resolve, reject) => {
-            connection.query(query, (error, results) => {
-                if (error) return reject(error);
-                resolve(results);
-            });
-        });
+    const results = await new Promise((resolve, reject) => {
+      connection.query(query, (error, results) => {
+        if (error) return reject(error);
+        resolve(results);
+      });
+    });
 
-        // Confirmar transacción
-        await new Promise((resolve, reject) => {
-            connection.commit((err) => {
-                if (err) return reject(err);
-                resolve(null);
-            });
-        });
+    // Confirmar transacción
+    await new Promise((resolve, reject) => {
+      connection.commit((err) => {
+        if (err) return reject(err);
+        resolve(null);
+      });
+    });
 
-        res.status(200).json({ data: results });
-    } catch (err) {
-        console.error("Error al obtener los usuarios conectados:", err);
-        await new Promise((resolve) => connection.rollback(() => resolve(null)));
-        res.status(500).json({ error: "Error al obtener los usuarios conectados." });
-    }
+    res.status(200).json({ data: results });
+  } catch (err) {
+    console.error("Error al obtener los usuarios conectados:", err);
+    await new Promise((resolve) => connection.rollback(() => resolve(null)));
+    res.status(500).json({ error: "Error al obtener los usuarios conectados." });
+  }
 });
 
 
@@ -85,63 +86,63 @@ router.delete('/deleteUser/:id_user', async (req, res) => {
   const { id_user } = req.params;
 
   try {
-      const decodedIdUser = decodeToken(id_user);
+    const decodedIdUser = decodeToken(id_user);
 
-      connection.beginTransaction((err) => {
-          if (err) throw err;
+    connection.beginTransaction((err) => {
+      if (err) throw err;
 
-          connection.query(
-              'DELETE FROM connected_users_channel_1 WHERE id_user = ?',
-              [decodedIdUser],
-              (error, result) => {
-                  if (error) {
-                      return connection.rollback(() => {
-                          console.error('Error al borrar usuario:', error);
-                          res.status(500).json({ error: 'Error al borrar usuario.' });
-                      });
-                  }
+      connection.query(
+        'DELETE FROM connected_users_channel_1 WHERE id_user = ?',
+        [decodedIdUser],
+        (error, result) => {
+          if (error) {
+            return connection.rollback(() => {
+              console.error('Error al borrar usuario:', error);
+              res.status(500).json({ error: 'Error al borrar usuario.' });
+            });
+          }
 
-                  connection.commit((commitErr) => {
-                      if (commitErr) {
-                          return connection.rollback(() => {
-                              console.error('Error al confirmar la transacción:', commitErr);
-                              res.status(500).json({ error: 'Error al confirmar la transacción.' });
-                          });
-                      }
+          connection.commit((commitErr) => {
+            if (commitErr) {
+              return connection.rollback(() => {
+                console.error('Error al confirmar la transacción:', commitErr);
+                res.status(500).json({ error: 'Error al confirmar la transacción.' });
+              });
+            }
 
-                      // Emitir el evento con el id_user eliminado
-                      if ((req as any).io) {
-                          (req as any).io.emit('user-exit-channel1', {
-                              id_user: decodedIdUser, // Incluir el ID del usuario eliminado
-                              message: 'Usuario eliminado en el canal 1',
-                          });
-                      }
+            // Emitir el evento con el id_user eliminado
+            if ((req as any).io) {
+              (req as any).io.emit('user-exit-channel1', {
+                id_user: decodedIdUser, // Incluir el ID del usuario eliminado
+                message: 'Usuario eliminado en el canal 1',
+              });
+            }
 
-                      res.status(200).json({ message: 'Usuario eliminado correctamente.' });
-                  });
-              }
-          );
-      });
+            res.status(200).json({ message: 'Usuario eliminado correctamente.' });
+          });
+        }
+      );
+    });
   } catch (err) {
-      console.error('Error al procesar eliminación del usuario:', err);
-      res.status(400).json({ error: 'Token inválido o error interno.' });
+    console.error('Error al procesar eliminación del usuario:', err);
+    res.status(400).json({ error: 'Token inválido o error interno.' });
   }
 });
 
 
 
-router.post('/upload-audio',(req, res, next) => {
-    upload.single('file')(req, res, (err: any) => {
-      if (err instanceof multer.MulterError) {
-        console.error('Error de Multer:', err.message);
-        return res.status(400).json({ success: false, message: err.message });
-      } else if (err) {
-        console.error('Error al subir el archivo:', err.message);
-        return res.status(400).json({ success: false, message: err.message });
-      }
-      next();
-    });
-  },
+router.post('/upload-audio', (req, res, next) => {
+  upload.single('file')(req, res, (err: any) => {
+    if (err instanceof multer.MulterError) {
+      console.error('Error de Multer:', err.message);
+      return res.status(400).json({ success: false, message: err.message });
+    } else if (err) {
+      console.error('Error al subir el archivo:', err.message);
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    next();
+  });
+},
   async (req: any, res) => {
     //console.log('Solicitud recibida en /upload-audio');
 
@@ -156,7 +157,8 @@ router.post('/upload-audio',(req, res, next) => {
     const audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio_channel_1/${req.file.filename}`;
 
     const userId = req.body.id_user; // Asegúrate de enviar el ID del usuario en la solicitud
-    const id_user= decodeToken(userId);
+    const id_user = decodeToken(userId);
+    const duration = req.body.duration;
 
     //console.log('Datos procesados - Audio URL:', audioUrl, 'User ID:', id_user);
     //console.log('Usuario recivido:',id_user)
@@ -184,11 +186,11 @@ router.post('/upload-audio',(req, res, next) => {
 
       // Guardar el audio en la base de datos
       const insertQuery = `
-        INSERT INTO audio_uploads_channel_1 (id_user, audio_url)
-        VALUES (?, ?)
+        INSERT INTO audio_uploads_channel_1 (id_user, audio_url, duration)
+        VALUES (?, ?, ?)
       `;
       await new Promise((resolve, reject) => {
-        connection.query(insertQuery, [id_user, audioUrl], (error: any, results: any) => {
+        connection.query(insertQuery, [id_user, audioUrl, duration], (error: any, results: any) => {
           if (error) {
             console.error('Error al insertar datos en la base de datos:', error);
             return reject(error);
@@ -213,14 +215,14 @@ router.post('/upload-audio',(req, res, next) => {
       // Emitir el evento con Socket.IO
       if (req.io) {
         //console.log('Emitiendo evento de audio subido al canal');
-        req.io.emit('audio-uploaded-channel1', { audioUrl, userId });
+        req.io.emit('audio-uploaded-channel1', { audioUrl, userId, duration });
         //console.log('Evento emitido con éxito con el usuario:', id_user);
       } else {
         console.log('Socket.IO no disponible en la solicitud');
       }
 
       // Respuesta exitosa
-      res.status(200).json({ success: true, audioUrl });
+      res.status(200).json({ success: true, audioUrl, duration });
     } catch (error) {
       console.error('Error al procesar la solicitud:', error);
 
@@ -240,10 +242,7 @@ router.post('/upload-audio',(req, res, next) => {
 
 
 router.delete('/delete-audios', async (req, res) => {
-
-  
   const directory = path.join(__dirname, '../../../dist/uploads/audio_channel_1');
-
   try {
     console.log('Eliminando audios en el directorio:', directory);
 
@@ -255,7 +254,7 @@ router.delete('/delete-audios', async (req, res) => {
 
     // Leer los archivos en el directorio
     const files = await new Promise<string[]>((resolve, reject) => {
-      fs.readdir(directory, (err:any, files:any) => {
+      fs.readdir(directory, (err: any, files: any) => {
         if (err) {
           console.error('Error al leer el directorio:', err);
           return reject(err);
@@ -271,7 +270,7 @@ router.delete('/delete-audios', async (req, res) => {
       const filePath = path.join(directory, file);
       console.log(`Intentando eliminar archivo: ${filePath}`);
       await new Promise((resolve, reject) => {
-        fs.unlink(filePath, (err:any) => {
+        fs.unlink(filePath, (err: any) => {
           if (err) {
             console.error(`Error al eliminar el archivo ${filePath}:`, err);
             return reject(err);
@@ -282,14 +281,69 @@ router.delete('/delete-audios', async (req, res) => {
       });
     }
 
-    console.log('Todos los audios han sido eliminados.');
-    res.status(200).json({ success: true, message: 'Todos los audios han sido eliminados con éxito.' });
+    // Eliminar registros de la tabla
+    const deleteUsersQuery = 'DELETE FROM connected_users_channel_1';
+    await new Promise((resolve, reject) => {
+      connection.query(deleteUsersQuery, (error, results) => {
+        if (error) {
+          console.error('Error al eliminar registros de connected_users_channel_1:', error);
+          return reject(error);
+        }
+        console.log('Registros eliminados de connected_users_channel_1:', results);
+        resolve(null);
+      });
+    });
+
+    // Reiniciar AUTO_INCREMENT
+    const resetConnectionIdQuery = 'ALTER TABLE connected_users_channel_1 AUTO_INCREMENT = 1';
+    await new Promise((resolve, reject) => {
+      connection.query(resetConnectionIdQuery, (error, results) => {
+        if (error) {
+          console.error('Error al reiniciar AUTO_INCREMENT en connected_users_channel_1:', error);
+          return reject(error);
+        }
+        console.log('AUTO_INCREMENT reiniciado para connected_users_channel_1:', results);
+        resolve(null);
+      });
+    });
+
+
+    // Eliminar las URLs de la base de datos
+    const deleteQuery = 'DELETE FROM audio_uploads_channel_1';
+    await new Promise((resolve, reject) => {
+      connection.query(deleteQuery, (error, results) => {
+        if (error) {
+          console.error('Error al eliminar URLs de la base de datos:', error);
+          return reject(error);
+        }
+        console.log('URLs eliminadas de la base de datos:', results);
+        resolve(null);
+      });
+    });
+
+    // Reiniciar el AUTO_INCREMENT
+    const resetQuery = 'ALTER TABLE audio_uploads_channel_1 AUTO_INCREMENT = 1';
+    await new Promise((resolve, reject) => {
+      connection.query(resetQuery, (error, results) => {
+        if (error) {
+          console.error('Error al reiniciar AUTO_INCREMENT:', error);
+          return reject(error);
+        }
+        console.log('AUTO_INCREMENT reiniciado:', results);
+        resolve(null);
+      });
+    });
+
+    console.log('Todos los audios han sido eliminados y la tabla reiniciada.');
+    res.status(200).json({ success: true, message: 'Todos los audios y URLs han sido eliminados con éxito.' });
   } catch (error) {
     console.error('Error al eliminar los audios:', error);
     res.status(500).json({ success: false, message: 'Error al eliminar los audios.', error });
   }
 });
 
-  
-  
+
+
+
+
 export default router;

@@ -148,6 +148,7 @@ router.post('/upload-audio', (req, res, next) => {
     const audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio_channel_1/${req.file.filename}`;
     const userId = req.body.id_user; // Asegúrate de enviar el ID del usuario en la solicitud
     const id_user = (0, decode_token_1.default)(userId);
+    const duration = req.body.duration;
     //console.log('Datos procesados - Audio URL:', audioUrl, 'User ID:', id_user);
     //console.log('Usuario recivido:',id_user)
     // Validar userId
@@ -170,11 +171,11 @@ router.post('/upload-audio', (req, res, next) => {
         //console.log('Transacción iniciada con éxito');
         // Guardar el audio en la base de datos
         const insertQuery = `
-        INSERT INTO audio_uploads_channel_1 (id_user, audio_url)
-        VALUES (?, ?)
+        INSERT INTO audio_uploads_channel_1 (id_user, audio_url, duration)
+        VALUES (?, ?, ?)
       `;
         yield new Promise((resolve, reject) => {
-            db_1.default.query(insertQuery, [id_user, audioUrl], (error, results) => {
+            db_1.default.query(insertQuery, [id_user, audioUrl, duration], (error, results) => {
                 if (error) {
                     console.error('Error al insertar datos en la base de datos:', error);
                     return reject(error);
@@ -197,14 +198,14 @@ router.post('/upload-audio', (req, res, next) => {
         // Emitir el evento con Socket.IO
         if (req.io) {
             //console.log('Emitiendo evento de audio subido al canal');
-            req.io.emit('audio-uploaded-channel1', { audioUrl, userId });
+            req.io.emit('audio-uploaded-channel1', { audioUrl, userId, duration });
             //console.log('Evento emitido con éxito con el usuario:', id_user);
         }
         else {
             console.log('Socket.IO no disponible en la solicitud');
         }
         // Respuesta exitosa
-        res.status(200).json({ success: true, audioUrl });
+        res.status(200).json({ success: true, audioUrl, duration });
     }
     catch (error) {
         console.error('Error al procesar la solicitud:', error);
@@ -253,8 +254,56 @@ router.delete('/delete-audios', (req, res) => __awaiter(void 0, void 0, void 0, 
                 });
             });
         }
-        console.log('Todos los audios han sido eliminados.');
-        res.status(200).json({ success: true, message: 'Todos los audios han sido eliminados con éxito.' });
+        // Eliminar registros de la tabla
+        const deleteUsersQuery = 'DELETE FROM connected_users_channel_1';
+        yield new Promise((resolve, reject) => {
+            db_1.default.query(deleteUsersQuery, (error, results) => {
+                if (error) {
+                    console.error('Error al eliminar registros de connected_users_channel_1:', error);
+                    return reject(error);
+                }
+                console.log('Registros eliminados de connected_users_channel_1:', results);
+                resolve(null);
+            });
+        });
+        // Reiniciar AUTO_INCREMENT
+        const resetConnectionIdQuery = 'ALTER TABLE connected_users_channel_1 AUTO_INCREMENT = 1';
+        yield new Promise((resolve, reject) => {
+            db_1.default.query(resetConnectionIdQuery, (error, results) => {
+                if (error) {
+                    console.error('Error al reiniciar AUTO_INCREMENT en connected_users_channel_1:', error);
+                    return reject(error);
+                }
+                console.log('AUTO_INCREMENT reiniciado para connected_users_channel_1:', results);
+                resolve(null);
+            });
+        });
+        // Eliminar las URLs de la base de datos
+        const deleteQuery = 'DELETE FROM audio_uploads_channel_1';
+        yield new Promise((resolve, reject) => {
+            db_1.default.query(deleteQuery, (error, results) => {
+                if (error) {
+                    console.error('Error al eliminar URLs de la base de datos:', error);
+                    return reject(error);
+                }
+                console.log('URLs eliminadas de la base de datos:', results);
+                resolve(null);
+            });
+        });
+        // Reiniciar el AUTO_INCREMENT
+        const resetQuery = 'ALTER TABLE audio_uploads_channel_1 AUTO_INCREMENT = 1';
+        yield new Promise((resolve, reject) => {
+            db_1.default.query(resetQuery, (error, results) => {
+                if (error) {
+                    console.error('Error al reiniciar AUTO_INCREMENT:', error);
+                    return reject(error);
+                }
+                console.log('AUTO_INCREMENT reiniciado:', results);
+                resolve(null);
+            });
+        });
+        console.log('Todos los audios han sido eliminados y la tabla reiniciada.');
+        res.status(200).json({ success: true, message: 'Todos los audios y URLs han sido eliminados con éxito.' });
     }
     catch (error) {
         console.error('Error al eliminar los audios:', error);

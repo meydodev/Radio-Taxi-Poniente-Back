@@ -54,26 +54,30 @@ app.use('/channel1', channel1);
 let currentRecorder: string | null = null;
 
 io.on('connection', (socket) => {
+    //console.log(`Cliente conectado: ${socket.id}`);
+
     // Manejar el inicio de la grabación
     socket.on('start-recording', ({ token }) => {
         if (currentRecorder) {
-            // Si alguien ya está grabando, no permite que otro comience
+            // Si ya hay un grabador, no permite que otro comience
             socket.emit('recording-denied', { message: 'Otro usuario está grabando.' });
+            console.warn(`Intento de grabación rechazado. Grabador actual: ${currentRecorder}`);
         } else {
-            // Guarda el token del grabador actual
+            // Asigna el grabador actual
             currentRecorder = token;
             io.emit('recording-started', { recorder: token }); // Notifica a todos
-            //console.log(`Grabación iniciada por el cliente: ${token}`);
+            console.log(`Grabación iniciada por el cliente: ${token}`);
         }
     });
+
 
     // Manejar el fin de la grabación
     socket.on('stop-recording', ({ token }) => {
         if (currentRecorder === token) {
-            // Solo el grabador actual puede detener la grabación
-            currentRecorder = null; // Libera el estado de grabación
+            // El grabador actual puede detener la grabación
+            currentRecorder = null; // Resetea el estado de grabación
             io.emit('recording-stopped'); // Notifica a todos que la grabación ha terminado
-            //console.log(`Grabación detenida por el cliente: ${token}`);
+            console.log(`Grabación detenida por el cliente: ${token}`);
         } else {
             // Si no es el grabador actual, rechaza la solicitud
             socket.emit('stop-recording-denied', {
@@ -83,12 +87,30 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Evento para forzar el reset manual (opcional para depuración)
+    socket.on('reset-recording', () => {
+        console.warn(`El estado de grabación se reinicia manualmente por ${socket.id}`);
+        currentRecorder = null;
+        io.emit('recording-stopped'); // Notifica a todos que la grabación ha terminado
+    });
+
     // Manejar desconexiones
     socket.on('disconnect', () => {
         if (currentRecorder === socket.id) {
-            currentRecorder = null; // Libera el estado si el grabador se desconecta
+            // Si el grabador actual se desconecta, libera el estado
+            console.warn(`El grabador ${socket.id} se desconectó mientras grababa.`);
+            currentRecorder = null;
             io.emit('recording-stopped'); // Notifica que la grabación ha terminado
-            //console.log(`Cliente desconectado mientras grababa: ${socket.id}`);
+        }
+    });
+
+    // Manejador de errores generales
+    socket.on('error', (err) => {
+        console.error(`Error detectado en el cliente ${socket.id}:`, err);
+        if (currentRecorder === socket.id) {
+            console.warn(`Reiniciando el estado porque el grabador ${socket.id} causó un error.`);
+            currentRecorder = null;
+            io.emit('recording-stopped');
         }
     });
 });
