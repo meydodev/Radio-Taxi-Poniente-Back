@@ -6,7 +6,7 @@ const router = express.Router();
 router.use(express.json());
 
 router.post('/addUserChannel1', async (req, res) => {
-    const { id_user,muted = false } = req.body;
+    const { id_user,muted = false,joined_at=new Date() } = req.body;
     let decodedIdUser;
 
     try {
@@ -24,8 +24,8 @@ router.post('/addUserChannel1', async (req, res) => {
             return res.status(500).json({ error: 'Error al iniciar la transacción.' });
         }
 
-        const insertQuery = 'INSERT INTO connected_users_channel_1 (id_user, muted) VALUES (?, ?)';
-        const insertParams = [decodedIdUser, muted];
+        const insertQuery = 'INSERT INTO connected_users_channel_1 (id_user, muted, joined_at) VALUES (?, ?, ?)';
+        const insertParams = [decodedIdUser, muted,joined_at];
 
         connection.query(insertQuery, insertParams, (error, result) => {
             if (error) {
