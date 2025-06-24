@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import express, { Request, Response } from 'express';
-const SECRET_KEY = 'dK7$gB@5mN!2pX&9qV^8yZ*3xR6+L0zC4hW1F!';
+const SECRET_KEY = process.env.SECRET_KEY as string; // Asegúrate de que la clave secreta esté definida en tu archivo .env
+require('dotenv').config();
 const router = express.Router();
 
 function decodeToken(token: string): any | null {

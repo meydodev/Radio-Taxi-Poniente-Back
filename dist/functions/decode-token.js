@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const express_1 = __importDefault(require("express"));
-const SECRET_KEY = 'dK7$gB@5mN!2pX&9qV^8yZ*3xR6+L0zC4hW1F!';
+const SECRET_KEY = process.env.SECRET_KEY; // Asegúrate de que la clave secreta esté definida en tu archivo .env
+require('dotenv').config();
 const router = express_1.default.Router();
 function decodeToken(token) {
     try {

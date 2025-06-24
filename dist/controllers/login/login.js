@@ -16,8 +16,9 @@ const express_1 = __importDefault(require("express"));
 const db_1 = __importDefault(require("../../db/db"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
+require('dotenv').config();
 const router = express_1.default.Router();
-const SECRET_KEY = 'dK7$gB@5mN!2pX&9qV^8yZ*3xR6+L0zC4hW1F!';
+const SECRET_KEY = process.env.SECRET_KEY;
 router.use(express_1.default.json());
 router.post('/verify', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;

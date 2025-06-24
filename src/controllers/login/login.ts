@@ -3,10 +3,11 @@ import { Request, Response } from 'express';
 import connection from "../../db/db";
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+require ('dotenv').config();
 
 
 const router = express.Router();
-const SECRET_KEY = 'dK7$gB@5mN!2pX&9qV^8yZ*3xR6+L0zC4hW1F!';
+const SECRET_KEY = process.env.SECRET_KEY as string;
 
 router.use(express.json());
 
